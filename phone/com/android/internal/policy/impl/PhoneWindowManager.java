@@ -105,6 +105,7 @@ import android.view.animation.AnimationUtils;
 import android.media.IAudioService;
 import android.media.AudioManager;
 
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 
 /**
@@ -472,8 +473,14 @@ public class PhoneWindowManager implements WindowManagerPolicy {
              */
             mHomePressed = false;
             performHapticFeedbackLw(null, HapticFeedbackConstants.LONG_PRESS, false);
-            sendCloseSystemWindows(SYSTEM_DIALOG_REASON_RECENT_APPS);
-            showRecentAppsDialog();
+            
+            if (Settings.System.getInt(mContext.getContentResolver(), Settings.System.USE_CUSTOM_APP, 0) != 0) {
+                runCustomApp();
+            }
+            else {            
+                sendCloseSystemWindows(SYSTEM_DIALOG_REASON_RECENT_APPS);
+                showRecentAppsDialog();
+            }
         }
     };
     
@@ -523,6 +530,21 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             mRecentAppsDialog = new RecentApplicationsDialog(mContext);
         }
         mRecentAppsDialog.show();
+    }
+    
+    void runCustomApp() {
+        String uri = Settings.System.getString(mContext.getContentResolver(), Settings.System.SELECTED_CUSTOM_APP);
+        
+        if (uri != null) {
+            try {
+                Intent i = Intent.parseUri(uri, 0);
+                i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+                mContext.startActivity(i);
+            }
+            catch (URISyntaxException e) {
+            
+            }
+        }
     }
     
     /** {@inheritDoc} */
