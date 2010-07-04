@@ -52,6 +52,7 @@ public class RecentApplicationsDialog extends Dialog implements OnClickListener 
     private static int currRecentAppsNum;
 
     TextView[] mIcons;
+    View mTitle;
     View mNoAppsText;
     IntentFilter mBroadcastIntentFilter = new IntentFilter(Intent.ACTION_CLOSE_SYSTEM_DIALOGS);
 
@@ -69,9 +70,7 @@ public class RecentApplicationsDialog extends Dialog implements OnClickListener 
      */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        
-        android.util.Log.d("WYSIE", "WHY");
+        super.onCreate(savedInstanceState);        
 
         Context context = getContext();
 
@@ -118,6 +117,7 @@ public class RecentApplicationsDialog extends Dialog implements OnClickListener 
         super.onStart();
         updateConfig();
         reloadButtons();
+        showHideRecentTitle();
         if (sStatusBar != null) {
             sStatusBar.disable(StatusBarManager.DISABLE_EXPAND);
         }
@@ -160,7 +160,7 @@ public class RecentApplicationsDialog extends Dialog implements OnClickListener 
         if (currRecentAppsNum == NUM_BUTTONS) //No change
             return;
         
-        if (NUM_BUTTONS != 8 && NUM_BUTTONS != 12 && NUM_BUTTONS != 16)
+        if (NUM_BUTTONS != 8 && NUM_BUTTONS != 12 && NUM_BUTTONS != 15)
             NUM_BUTTONS = 8; //Load 8 by default
             
         MAX_RECENT_TASKS = NUM_BUTTONS * 2;
@@ -168,21 +168,32 @@ public class RecentApplicationsDialog extends Dialog implements OnClickListener 
         
         mIcons = new TextView[NUM_BUTTONS];
         
-        if (NUM_BUTTONS == 16) {
-            loadSixteenRecentAppsConfig();
+        if (NUM_BUTTONS == 15) {
+            loadFifteenRecentAppsConfig();
         }
         else if (NUM_BUTTONS == 12) {
             loadTwelveRecentAppsConfig();
         }
         else { //Load 8 by default
             loadEightRecentAppsConfig();
-        }            
+        }        
         
         mNoAppsText = findViewById(com.android.internal.R.id.no_applications_message);
         
         for (TextView b: mIcons) {
             b.setOnClickListener(this);
         }       
+    }
+    
+    private void showHideRecentTitle() {
+        mTitle = findViewById(com.android.internal.R.id.recent_title);
+        
+        if (Settings.System.getInt(getContext().getContentResolver(), Settings.System.RECENT_APPS_SHOW_TITLE, 1) != 0) {
+            mTitle.setVisibility(View.VISIBLE);
+        }
+        else {
+            mTitle.setVisibility(View.GONE);
+        }
     }
     
     private void setWindowParams() {
@@ -226,8 +237,8 @@ public class RecentApplicationsDialog extends Dialog implements OnClickListener 
         mIcons[11] = (TextView)findViewById(com.android.internal.R.id.button11);
     }
     
-    private void loadSixteenRecentAppsConfig() {
-        setContentView(com.android.internal.R.layout.recent_apps_dialog_16);
+    private void loadFifteenRecentAppsConfig() {
+        setContentView(com.android.internal.R.layout.recent_apps_dialog_15);
         setWindowParams();
     
         mIcons[0] = (TextView)findViewById(com.android.internal.R.id.button0);
@@ -245,11 +256,10 @@ public class RecentApplicationsDialog extends Dialog implements OnClickListener 
         mIcons[12] = (TextView)findViewById(com.android.internal.R.id.button12);
         mIcons[13] = (TextView)findViewById(com.android.internal.R.id.button13);        
         mIcons[14] = (TextView)findViewById(com.android.internal.R.id.button14);
-        mIcons[15] = (TextView)findViewById(com.android.internal.R.id.button15);
-    }
+    }    
 
     /**
-     * Reload the 6 buttons with recent activities
+     * Reload the 8/12/15 buttons with recent activities
      */
     private void reloadButtons() {
 
