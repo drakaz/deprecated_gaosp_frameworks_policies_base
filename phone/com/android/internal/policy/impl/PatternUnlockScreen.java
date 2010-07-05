@@ -95,6 +95,7 @@ class PatternUnlockScreen extends LinearLayoutWithDefaultTouchRecepient
     private TextView mStatus1;
     private TextView mStatusSep;
     private TextView mStatus2;
+    private TextView mCustomMsg;
 
 
     private LockPatternView mLockPatternView;
@@ -195,6 +196,15 @@ class PatternUnlockScreen extends LinearLayoutWithDefaultTouchRecepient
         mStatus1 = (TextView) findViewById(R.id.status1);
         mStatusSep = (TextView) findViewById(R.id.statusSep);
         mStatus2 = (TextView) findViewById(R.id.status2);
+        mCustomMsg = (TextView) findViewById(R.id.customMsg);
+        
+        if (mLockPatternUtils.isShowCustomMsg()) {
+            mCustomMsg.setVisibility(View.VISIBLE);
+            mCustomMsg.setText(mLockPatternUtils.getCustomMsg());
+        }
+        else {
+            mCustomMsg.setVisibility(View.GONE);
+        }
 
         resetStatusInfo();
 
@@ -241,6 +251,10 @@ class PatternUnlockScreen extends LinearLayoutWithDefaultTouchRecepient
 
         // vibrate mode will be the same for the life of this screen
         mLockPatternView.setTactileFeedbackEnabled(mLockPatternUtils.isTactileFeedbackEnabled());
+        
+        mLockPatternView.setVisibleDots(mLockPatternUtils.isVisibleDotsEnabled());
+        mLockPatternView.setShowErrorPath(mLockPatternUtils.isShowErrorPath());        
+        mLockPatternView.setIncorrectDelay(mLockPatternUtils.getIncorrectDelay());
 
         // assume normal footer mode for now
         updateFooter(FooterMode.Normal);
@@ -290,7 +304,13 @@ class PatternUnlockScreen extends LinearLayoutWithDefaultTouchRecepient
                         R.drawable.ic_lock_idle_lock, 0, 0, 0);
             }
 
-            mStatus1.setVisibility(View.VISIBLE);
+            if (mInstructions.equals(getContext().getString(R.string.lockscreen_pattern_wrong)) && !mLockPatternUtils.isShowUnlockErrMsg()) {
+                mStatus1.setVisibility(View.GONE);
+            }
+            else {
+                mStatus1.setVisibility(View.VISIBLE);
+            }
+            
             mStatusSep.setVisibility(View.GONE);
             mStatus2.setVisibility(View.GONE);
         } else if (mShowingBatteryInfo && mNextAlarm == null) {
@@ -340,7 +360,13 @@ class PatternUnlockScreen extends LinearLayoutWithDefaultTouchRecepient
             mStatus1.setText(R.string.lockscreen_pattern_instructions);
             mStatus1.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_lock_idle_lock, 0, 0, 0);
 
-            mStatus1.setVisibility(View.VISIBLE);
+            if (mLockPatternUtils.isShowUnlockMsg()) {
+                mStatus1.setVisibility(View.VISIBLE);
+            }
+            else {
+                mStatus1.setVisibility(View.GONE);
+            }
+            
             mStatusSep.setVisibility(View.GONE);
             mStatus2.setVisibility(View.GONE);
         }
@@ -537,7 +563,7 @@ class PatternUnlockScreen extends LinearLayoutWithDefaultTouchRecepient
                     updateStatusLines();
                     mLockPatternView.postDelayed(
                             mCancelPatternRunnable,
-                            PATTERN_CLEAR_TIMEOUT_MS);
+                            mLockPatternView.getIncorrectDelay());
                 }
             }
         }
