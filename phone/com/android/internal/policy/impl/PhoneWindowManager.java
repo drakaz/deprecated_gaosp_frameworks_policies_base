@@ -2646,6 +2646,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             hapLoaded = hapDefault;
             hapDone = true;
         }
+        Settings.System.putString(mContext.getContentResolver(), hapDefTypeString, longArrayToString(hapDefault));
         return hapLoaded;
     }
 
@@ -2660,9 +2661,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     private void saveHapticToSettings(String hapType, String hapDefType, String defString) {
     	Log.i(TAG, "Had to load default haptic settings for: " + hapType + " saving "+ defString + "to settings");
         Settings.System.putString(mContext.getContentResolver(), hapType, defString);
-        Settings.System.putString(mContext.getContentResolver(), hapDefType, defString);
-        Settings.System.putInt(mContext.getContentResolver(), Settings.System.HAPTIC_FEEDBACK_UP_ENABLED, 0);
-        Settings.System.putInt(mContext.getContentResolver(), Settings.System.HAPTIC_FEEDBACK_ALL_ENABLED, 0);
     }
 
     private long[] stringToLongArray(String inpString) {
