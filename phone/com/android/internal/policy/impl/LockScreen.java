@@ -94,6 +94,8 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
     private String mDateFormatString;
     private java.text.DateFormat mTimeFormat;
     private boolean mEnableMenuKeyInLockScreen;
+    private static boolean mShowSpnPref;
+    private static boolean mShowPlmnPref;
     private boolean mTrackballUnlockScreen = (Settings.System.getInt(mContext.getContentResolver(),
          Settings.System.TRACKBALL_UNLOCK_SCREEN, 0) == 1);
     private boolean mMenuUnlockScreen = (Settings.System.getInt(mContext.getContentResolver(),
@@ -180,6 +182,10 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
         mLockPatternUtils = lockPatternUtils;
         mUpdateMonitor = updateMonitor;
         mCallback = callback;
+        mShowSpnPref = (Settings.System.getInt(context.getContentResolver(),
+             Settings.System.SHOW_SPN_LS, 1) == 1);
+        mShowPlmnPref = (Settings.System.getInt(context.getContentResolver(),
+             Settings.System.SHOW_PLMN_LS, 1) == 1);
 
         mEnableMenuKeyInLockScreen = shouldEnableMenuKey();
 
@@ -609,11 +615,11 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
     }
 
     static CharSequence getCarrierString(CharSequence telephonyPlmn, CharSequence telephonySpn) {
-        if (telephonyPlmn != null && telephonySpn == null) {
+        if (telephonyPlmn != null && (telephonySpn == null || !mShowSpnPref) && mShowPlmnPref) {
             return telephonyPlmn;
-        } else if (telephonyPlmn != null && telephonySpn != null) {
+        } else if (telephonyPlmn != null && telephonySpn != null && mShowPlmnPref && mShowSpnPref) {
             return telephonyPlmn + "|" + telephonySpn;
-        } else if (telephonyPlmn == null && telephonySpn != null) {
+        } else if ((telephonyPlmn == null || !mShowPlmnPref) && telephonySpn != null && mShowSpnPref) {
             return telephonySpn;
         } else {
             return "";
