@@ -26,6 +26,7 @@ import android.os.RemoteException;
 import android.os.LocalPowerManager;
 import android.os.ServiceManager;
 import android.os.SystemClock;
+import android.provider.Settings;
 
 import com.android.internal.app.ShutdownThread;
 import com.android.internal.telephony.ITelephony;
@@ -49,6 +50,7 @@ public class PowerDialog extends Dialog implements OnClickListener,
     private Button mPower;
     private Button mRadioPower;
     private Button mSilent;
+    private boolean mPromptShutdown;
 
     private LocalPowerManager mPowerManager;
 
@@ -69,6 +71,8 @@ public class PowerDialog extends Dialog implements OnClickListener,
 
         setContentView(com.android.internal.R.layout.power_dialog);
 
+        mPromptShutdown = (Settings.System.getInt(context.getContentResolver(),
+                Settings.System.POWER_DIALOG_PROMPT,1) == 1 );
         getWindow().setType(WindowManager.LayoutParams.TYPE_SYSTEM_DIALOG);
         if (!getContext().getResources().getBoolean(
                 com.android.internal.R.bool.config_sf_slowBlur)) {
@@ -126,7 +130,7 @@ public class PowerDialog extends Dialog implements OnClickListener,
         this.dismiss();
         if (v == mPower) {
             // shutdown by making sure radio and power are handled accordingly.
-            ShutdownThread.shutdown(getContext(), true);
+            ShutdownThread.shutdown(getContext(), mPromptShutdown);
         } else if (v == mRadioPower) {
             try {
                 ITelephony phone = ITelephony.Stub.asInterface(ServiceManager.checkService("phone"));
