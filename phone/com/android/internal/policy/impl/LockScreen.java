@@ -108,6 +108,8 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
          Settings.System.TRACKBALL_UNLOCK_SCREEN, 0) == 1);
     private boolean mMenuUnlockScreen = (Settings.System.getInt(mContext.getContentResolver(),
          Settings.System.MENU_UNLOCK_SCREEN, 0) == 1);
+    private boolean mLockMusicControls = (Settings.System.getInt(mContext.getContentResolver(),
+         Settings.System.LOCKSCREEN_MUSIC_CONTROLS, 0) == 1);
 
     /**
      * The status of this lock screen.
@@ -238,7 +240,7 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
         mPauseIcon = (ImageButton) findViewById(R.id.musicControlPause); 
         mRewindIcon = (ImageButton) findViewById(R.id.musicControlPrevious); 
         mForwardIcon = (ImageButton) findViewById(R.id.musicControlNext); 
-        if (wasActive) {
+        if (wasActive && mLockMusicControls) {
             if(am.isMusicActive()) {
                 mPauseIcon.setVisibility(View.VISIBLE);
                 mPlayIcon.setVisibility(View.GONE);
