@@ -75,7 +75,8 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
     private ImageButton mRewindIcon;
     private ImageButton mForwardIcon;
     private AudioManager am = (AudioManager)getContext().getSystemService(Context.AUDIO_SERVICE);
-    private boolean wasActive = am.isMusicActive();
+    private boolean mWasMusicActive = am.isMusicActive();
+    private boolean mIsMusicActive = false;
 
     private TextView mCustomMsg;
 
@@ -240,24 +241,7 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
         mPauseIcon = (ImageButton) findViewById(R.id.musicControlPause); 
         mRewindIcon = (ImageButton) findViewById(R.id.musicControlPrevious); 
         mForwardIcon = (ImageButton) findViewById(R.id.musicControlNext); 
-        if (wasActive && mLockMusicControls) {
-            if(am.isMusicActive()) {
-                mPauseIcon.setVisibility(View.VISIBLE);
-                mPlayIcon.setVisibility(View.GONE);
-                mRewindIcon.setVisibility(View.VISIBLE);
-                mForwardIcon.setVisibility(View.VISIBLE);
-            } else {
-                mPlayIcon.setVisibility(View.VISIBLE);
-                mPauseIcon.setVisibility(View.GONE);
-                mRewindIcon.setVisibility(View.GONE);
-                mForwardIcon.setVisibility(View.GONE);
-            }
-        } else {
-            mPlayIcon.setVisibility(View.GONE);
-            mPauseIcon.setVisibility(View.GONE);
-            mRewindIcon.setVisibility(View.GONE);
-            mForwardIcon.setVisibility(View.GONE);
-        }
+       
         mScreenLocked = (TextView) findViewById(R.id.screenLocked);
         mSelector = (SlidingTab) findViewById(R.id.tab_selector);
         mSelector.setHoldAfterTrigger(true, false);
@@ -282,7 +266,8 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
         mPlayIcon.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 mCallback.pokeWakelock();
-                if(!am.isMusicActive() && wasActive) {
+                refreshMusicStatus();
+                if(!am.isMusicActive()) {
                     mPauseIcon.setVisibility(View.VISIBLE);
                     mPlayIcon.setVisibility(View.GONE);
                     mRewindIcon.setVisibility(View.VISIBLE);
@@ -297,6 +282,7 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
         mPauseIcon.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 mCallback.pokeWakelock();
+                refreshMusicStatus();
                 if(am.isMusicActive()) {
                     mPlayIcon.setVisibility(View.VISIBLE);
                     mPauseIcon.setVisibility(View.GONE);
@@ -375,6 +361,7 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
         mShowingBatteryInfo = updateMonitor.shouldShowBatteryInfo();
         mPluggedIn = updateMonitor.isDevicePluggedIn();
         mBatteryLevel = updateMonitor.getBatteryLevel();
+        mIsMusicActive = am.isMusicActive();
 
         mStatus = getCurrentStatus(updateMonitor.getSimState());
         updateLayout(mStatus);
@@ -382,6 +369,7 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
         refreshBatteryStringAndIcon();
         refreshAlarmDisplay();
 
+        refreshMusicStatus();
         mTimeFormat = DateFormat.getTimeFormat(getContext());
         mDateFormatString = getContext().getString(R.string.full_wday_month_day_no_year);
         refreshTimeAndDateDisplay();
@@ -528,6 +516,26 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
             }
         } else {
             mCharging = getContext().getString(R.string.lockscreen_low_battery);
+        }
+    }
+    private void refreshMusicStatus() {
+        if ((mWasMusicActive || mIsMusicActive) && mLockMusicControls) {
+            if(am.isMusicActive()) {
+                mPauseIcon.setVisibility(View.VISIBLE);
+                mPlayIcon.setVisibility(View.GONE);
+                mRewindIcon.setVisibility(View.VISIBLE);
+                mForwardIcon.setVisibility(View.VISIBLE);
+            } else {
+                mPlayIcon.setVisibility(View.VISIBLE);
+                mPauseIcon.setVisibility(View.GONE);
+                mRewindIcon.setVisibility(View.GONE);
+                mForwardIcon.setVisibility(View.GONE);
+            }
+        } else {
+            mPlayIcon.setVisibility(View.GONE);
+            mPauseIcon.setVisibility(View.GONE);
+            mRewindIcon.setVisibility(View.GONE);
+            mForwardIcon.setVisibility(View.GONE);
         }
     }
 
