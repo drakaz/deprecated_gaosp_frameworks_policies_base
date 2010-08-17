@@ -233,6 +233,7 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
         if (mLockPatternUtils.isShowCustomMsg()) {
             mCustomMsg.setVisibility(View.VISIBLE);
             mCustomMsg.setText(mLockPatternUtils.getCustomMsg());
+            mCustomMsg.setTextColor(mLockPatternUtils.getCustomMsgColor());
         }
         else {
             mCustomMsg.setVisibility(View.GONE);

@@ -201,6 +201,7 @@ class PatternUnlockScreen extends LinearLayoutWithDefaultTouchRecepient
         if (mLockPatternUtils.isShowCustomMsg()) {
             mCustomMsg.setVisibility(View.VISIBLE);
             mCustomMsg.setText(mLockPatternUtils.getCustomMsg());
+            mCustomMsg.setTextColor(mLockPatternUtils.getCustomMsgColor());
         }
         else {
             mCustomMsg.setVisibility(View.GONE);
