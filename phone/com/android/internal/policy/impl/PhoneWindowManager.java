@@ -2178,7 +2178,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         int scancode = event.scancode;
         int flags = event.flags;
         if (mTrackballWakeScreen && 
-                (keycode == RawInputEvent.BTN_MOUSE || scancode == RawInputEvent.BTN_MOUSE)) {
+                (keycode == RawInputEvent.BTN_MOUSE || scancode == RawInputEvent.BTN_MOUSE || scancode == RawInputEvent.HOLD)) {
             flags |= WindowManagerPolicy.FLAG_WAKE;
         }
         return (flags
