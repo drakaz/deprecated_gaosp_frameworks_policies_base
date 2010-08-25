@@ -259,12 +259,7 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
                 mCallback.takeEmergencyCallAction();
             }
         });
-        mEmergencyCallButton.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                mCallback.takeEmergencyCallAction();
-            }
-        });
-        
+
         mPlayIcon.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 mCallback.pokeWakelock();
