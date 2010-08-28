@@ -230,13 +230,15 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
         
         mCustomMsg = (TextView) findViewById(R.id.customMsg);
         
-        if (mLockPatternUtils.isShowCustomMsg()) {
-            mCustomMsg.setVisibility(View.VISIBLE);
-            mCustomMsg.setText(mLockPatternUtils.getCustomMsg());
-            mCustomMsg.setTextColor(mLockPatternUtils.getCustomMsgColor());
-        }
-        else {
-            mCustomMsg.setVisibility(View.GONE);
+        if (mCustomMsg != null) {
+            if (mLockPatternUtils.isShowCustomMsg()) {
+                mCustomMsg.setVisibility(View.VISIBLE);
+                mCustomMsg.setText(mLockPatternUtils.getCustomMsg());
+                mCustomMsg.setTextColor(mLockPatternUtils.getCustomMsgColor());
+            }
+            else {
+                mCustomMsg.setVisibility(View.GONE);
+            }
         }
 
         mPlayIcon = (ImageButton) findViewById(R.id.musicControlPlay);
@@ -259,12 +261,7 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
                 mCallback.takeEmergencyCallAction();
             }
         });
-        mEmergencyCallButton.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                mCallback.takeEmergencyCallAction();
-            }
-        });
-        
+
         mPlayIcon.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 mCallback.pokeWakelock();
