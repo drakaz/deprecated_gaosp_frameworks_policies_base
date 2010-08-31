@@ -1963,7 +1963,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             }
 
             if (code == KeyEvent.KEYCODE_ENDCALL
-                    || code == KeyEvent.KEYCODE_POWER) {
+                    || code == KeyEvent.KEYCODE_POWER || (mTrackballWakeScreen && code == KeyEvent.KEYCODE_HOLD)) {
                 if (down) {
                     boolean handled = false;
                     boolean hungUp = false;
@@ -2000,7 +2000,10 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     if (!screenIsOn
                             || (handled && code != KeyEvent.KEYCODE_POWER)
                             || (handled && hungUp && code == KeyEvent.KEYCODE_POWER)) {
+			
                         mShouldTurnOffOnKeyUp = false;
+                    } else if (code == KeyEvent.KEYCODE_HOLD && keyguardActive) {
+                    	mShouldTurnOffOnKeyUp = false;
                     } else {
                         // only try to turn off the screen if we didn't already hang up
                         mShouldTurnOffOnKeyUp = true;
