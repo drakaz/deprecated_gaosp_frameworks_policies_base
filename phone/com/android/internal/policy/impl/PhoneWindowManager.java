@@ -16,7 +16,11 @@
 
 package com.android.internal.policy.impl;
 
+import com.android.internal.R;
+
 import android.app.Activity;
+import android.app.ActivityManager;
+import android.app.ActivityManager.RunningAppProcessInfo;
 import android.app.ActivityManagerNative;
 import android.app.IActivityManager;
 import android.app.IStatusBar;
@@ -39,6 +43,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.LocalPowerManager;
 import android.os.PowerManager;
+import android.os.Process;
 import android.os.RemoteException;
 import android.os.ServiceManager;
 import android.os.SystemClock;
@@ -66,6 +71,7 @@ import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.Toast;
 import static android.view.WindowManager.LayoutParams.FIRST_APPLICATION_WINDOW;
 import static android.view.WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN;
 import static android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN;
@@ -107,6 +113,7 @@ import android.media.AudioManager;
 
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * WindowManagerPolicy implementation for the Android phone UI.  This
@@ -490,6 +497,34 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         }
     };
     
+    Runnable mBackLongPress = new Runnable() {
+        public void run() {
+            if (Settings.Secure.getInt(mContext.getContentResolver(),
+                Settings.Secure.KILL_APP_LONGPRESS_BACK, 0) == 0) {
+                // Bail out unless the user has elected to turn this on.
+                return;
+            }
+            try {
+                performHapticFeedbackLw(null, HapticFeedbackConstants.LONG_PRESS, false);
+                IActivityManager mgr = ActivityManagerNative.getDefault();
+                List<RunningAppProcessInfo> apps = mgr.getRunningAppProcesses();
+                for (RunningAppProcessInfo appInfo : apps) {
+                    int uid = appInfo.uid;
+                    // Make sure it's a foreground user application (not system, root, phone, etc.)
+                    if (uid >= Process.FIRST_APPLICATION_UID && uid <= Process.LAST_APPLICATION_UID
+                        && appInfo.importance == RunningAppProcessInfo.IMPORTANCE_FOREGROUND) {
+                        // Kill the entire pid
+                        Toast.makeText(mContext, R.string.app_killed_message, Toast.LENGTH_SHORT).show();
+                        Process.killProcess(appInfo.pid);
+                        break;
+                    }
+                }
+            } catch (RemoteException remoteException) {
+                // Do nothing; just let it go.
+            }
+        }
+    };
+
     /**
      * When a volumeup-key longpress expires, skip songs based on key press
      */
@@ -500,12 +535,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
              * the user lets go of the volume key
              */
             mVolumeUpPressed = false;
-            // Shamelessly copied from MediaPlaybackService.java, which
-            // should be public, but isn't.
-            Intent i = new Intent("com.android.music.musicservicecommand");
-            i.putExtra("command", "next");
             
-            mContext.sendBroadcast(i);
+            // Shamelessly copied from Kmobs LockScreen controls, works for Pandora, etc...
+            sendMediaButtonEvent(KeyEvent.KEYCODE_MEDIA_NEXT);
         };
     };
     
@@ -519,14 +551,25 @@ public class PhoneWindowManager implements WindowManagerPolicy {
              * the user lets go of the volume key
              */
             mVolumeDownPressed = false;
-            // Shamelessly copied from MediaPlaybackService.java, which
-            // should be public, but isn't.
-            Intent i = new Intent("com.android.music.musicservicecommand");
-            i.putExtra("command", "previous");
             
-            mContext.sendBroadcast(i);
+            // Shamelessly copied from Kmobs LockScreen controls, works for Pandora, etc...
+            sendMediaButtonEvent(KeyEvent.KEYCODE_MEDIA_PREVIOUS);
         };
     };
+    
+    private void sendMediaButtonEvent(int code) {
+        long eventtime = SystemClock.uptimeMillis();
+        
+        Intent downIntent = new Intent(Intent.ACTION_MEDIA_BUTTON, null);
+        KeyEvent downEvent = new KeyEvent(eventtime, eventtime, KeyEvent.ACTION_DOWN, code, 0);
+        downIntent.putExtra(Intent.EXTRA_KEY_EVENT, downEvent);
+        mContext.sendOrderedBroadcast(downIntent, null);
+
+        Intent upIntent = new Intent(Intent.ACTION_MEDIA_BUTTON, null);
+        KeyEvent upEvent = new KeyEvent(eventtime, eventtime, KeyEvent.ACTION_UP, code, 0);
+        upIntent.putExtra(Intent.EXTRA_KEY_EVENT, upEvent);
+        mContext.sendOrderedBroadcast(upIntent, null);
+    }
 
     /**
      * Create (if necessary) and launch the recent apps dialog
@@ -913,25 +956,25 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         }
         
         try {
-        	Context context = mContext;
-        	boolean setTheme = false;
-        	//Log.i(TAG, "addStartingWindow " + packageName + ": nonLocalizedLabel="
-        	//        + nonLocalizedLabel + " theme=" + Integer.toHexString(theme));
-        	if (theme != 0 || labelRes != 0) {
-        	    try {
-        	        context = context.createPackageContext(packageName, 0);
-        	        if (theme != 0) {
-        	            context.setTheme(theme);
-        	            setTheme = true;
-        	        }
-        	    } catch (PackageManager.NameNotFoundException e) {
+            Context context = mContext;
+            boolean setTheme = false;
+            //Log.i(TAG, "addStartingWindow " + packageName + ": nonLocalizedLabel="
+            //        + nonLocalizedLabel + " theme=" + Integer.toHexString(theme));
+            if (theme != 0 || labelRes != 0) {
+                try {
+                    context = context.createPackageContext(packageName, 0);
+                    if (theme != 0) {
+                        context.setTheme(theme);
+                        setTheme = true;
+                    }
+                } catch (PackageManager.NameNotFoundException e) {
                     // Ignore
                 }
-        	}
-        	if (!setTheme) {
-        	    context.setTheme(com.android.internal.R.style.Theme);
-        	}
-        	
+            }
+            if (!setTheme) {
+                context.setTheme(com.android.internal.R.style.Theme);
+            }
+            
             Window win = PolicyManager.makeNewWindow(context);
             if (win.getWindowStyle().getBoolean(
                     com.android.internal.R.styleable.Window_windowDisablePreview, false)) {
@@ -1118,6 +1161,11 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             mHandler.removeCallbacks(mHomeLongPress);
         }
 
+        // Clear a pending BACK longpress if the user releases Back.
+        if ((code == KeyEvent.KEYCODE_BACK) && !down) {
+            mHandler.removeCallbacks(mBackLongPress);
+        }
+
         // If the HOME button is currently being held, then we do special
         // chording with it.
         if (mHomePressed) {
@@ -1190,6 +1238,11 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 mHomePressed = true;
             }
             return true;
+        } else if (code == KeyEvent.KEYCODE_BACK) {
+            if (down && repeatCount == 0) {
+                mHandler.postDelayed(mBackLongPress, ViewConfiguration.getGlobalActionKeyTimeout());
+            }
+            return false;
         } else if (code == KeyEvent.KEYCODE_MENU) {
             // Hijack modified menu keys for debugging features
             final int chordBug = KeyEvent.META_SHIFT_ON;
@@ -2540,7 +2593,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             case HapticFeedbackConstants.VIRTUAL_RELEASED:
                 final boolean upDisabled = Settings.System.getInt(mContext.getContentResolver(),
                     Settings.System.HAPTIC_FEEDBACK_UP_ENABLED, 0) == 0;
-                if (upDisabled != true)	{
+                if (upDisabled != true) {
                     pattern = mVirtualKeyUpVibePattern;
                     break;
                 } else {
@@ -2596,7 +2649,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     private long[] loadHaptic(int hapType){
         switch (hapType) {
             case HapticFeedbackConstants.VIRTUAL_KEY :
-            	hapDone = false;
+                hapDone = false;
                 hapTypeString = Settings.System.HAPTIC_DOWN_ARRAY;
                 hapDefTypeString = Settings.System.HAPTIC_DOWN_ARRAY_DEFAULT;
                 Log.i(TAG, "names for haptic settings for haptic down array: "+hapTypeString+" default: "+ hapDefTypeString);
@@ -2611,7 +2664,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 }
                 break;
             case HapticFeedbackConstants.VIRTUAL_RELEASED :
-            	hapDone = false;
+                hapDone = false;
                 hapTypeString = Settings.System.HAPTIC_UP_ARRAY;
                 hapDefTypeString = Settings.System.HAPTIC_UP_ARRAY_DEFAULT;
                 Log.i(TAG, "names for haptic settings for haptic up array: "+hapTypeString+" default: "+ hapDefTypeString);
@@ -2626,7 +2679,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 }
                 break;
             case HapticFeedbackConstants.LONG_PRESS :
-            	hapDone = false;
+                hapDone = false;
                 hapTypeString = Settings.System.HAPTIC_LONG_ARRAY;
                 hapDefTypeString = Settings.System.HAPTIC_LONG_ARRAY_DEFAULT;
                 Log.i(TAG, "names for haptic settings for haptic long array: "+hapTypeString+" default: "+ hapDefTypeString);
@@ -2641,7 +2694,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 }
                 break;
             case HapticFeedbackConstants.KEYBOARD_TAP :
-            	hapDone = false;
+                hapDone = false;
                 hapTypeString = Settings.System.HAPTIC_TAP_ARRAY;
                 hapDefTypeString = Settings.System.HAPTIC_TAP_ARRAY_DEFAULT;
                 Log.i(TAG, "names for haptic settings for haptic tap array: "+hapTypeString+" default: "+ hapDefTypeString);
@@ -2678,7 +2731,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
      * @hide
      */
     private void saveHapticToSettings(String hapType, String hapDefType, String defString) {
-    	Log.i(TAG, "Had to load default haptic settings for: " + hapType + " saving "+ defString + "to settings");
+        Log.i(TAG, "Had to load default haptic settings for: " + hapType + " saving "+ defString + "to settings");
         Settings.System.putString(mContext.getContentResolver(), hapType, defString);
     }
 
