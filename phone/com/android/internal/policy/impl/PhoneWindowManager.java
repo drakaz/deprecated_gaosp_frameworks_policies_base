@@ -1240,7 +1240,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             return true;
         } else if (code == KeyEvent.KEYCODE_BACK) {
             if (down && repeatCount == 0) {
-                mHandler.postDelayed(mBackLongPress, ViewConfiguration.getGlobalActionKeyTimeout());
+                mHandler.postDelayed(mBackLongPress, 5000);
             }
             return false;
         } else if (code == KeyEvent.KEYCODE_MENU) {
