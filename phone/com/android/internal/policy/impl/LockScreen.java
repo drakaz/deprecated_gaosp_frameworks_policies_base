@@ -256,9 +256,11 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
         mSelector.setLeftHintText(R.string.lockscreen_unlock_label);
 
         mSelector2 = (SlidingTab) findViewById(R.id.tab_selector2);
-        mSelector2.setHoldAfterTrigger(true, false);
-        mSelector2.setLeftHintText(R.string.lockscreen_phone_label);
-        mSelector2.setRightHintText(R.string.lockscreen_messaging_label);
+        if (mSelector2 != null) {
+            mSelector2.setHoldAfterTrigger(true, false);
+            mSelector2.setLeftHintText(R.string.lockscreen_phone_label);
+            mSelector2.setRightHintText(R.string.lockscreen_messaging_label);
+        }
 
         mEmergencyCallText = (TextView) findViewById(R.id.emergencyCallText);
         mEmergencyCallButton = (Button) findViewById(R.id.emergencyCallButton);
