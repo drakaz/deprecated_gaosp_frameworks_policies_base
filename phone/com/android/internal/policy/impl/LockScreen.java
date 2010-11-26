@@ -691,8 +691,7 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
                 mScreenLocked.setVisibility(View.VISIBLE);
                 mSelector.setVisibility(View.VISIBLE);
                 if (mSelector2 != null) {
-                {
-                    if(mLockPhoneMessagingTab){
+                    if (mLockPhoneMessagingTab) {
                         mSelector2.setVisibility(View.VISIBLE);
                     } else {
                         mSelector2.setVisibility(View.GONE);
@@ -713,8 +712,7 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
                 mScreenLocked.setVisibility(View.VISIBLE);
                 mSelector.setVisibility(View.VISIBLE);
                 if (mSelector2 != null) {
-                {
-                    if(mLockPhoneMessagingTab){
+                    if (mLockPhoneMessagingTab) {
                         mSelector2.setVisibility(View.VISIBLE);
                     } else {
                         mSelector2.setVisibility(View.GONE);
