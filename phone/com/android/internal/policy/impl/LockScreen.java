@@ -231,9 +231,9 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
         mDate = (TextView) findViewById(R.id.date);
         mStatus1 = (TextView) findViewById(R.id.status1);
         mStatus2 = (TextView) findViewById(R.id.status2);
-        
+
         mCustomMsg = (TextView) findViewById(R.id.customMsg);
-        
+
         if (mCustomMsg != null) {
             if (mLockPatternUtils.isShowCustomMsg()) {
                 mCustomMsg.setVisibility(View.VISIBLE);
@@ -247,9 +247,9 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
 
         mPlayIcon = (ImageButton) findViewById(R.id.musicControlPlay);
         mPauseIcon = (ImageButton) findViewById(R.id.musicControlPause); 
-        mRewindIcon = (ImageButton) findViewById(R.id.musicControlPrevious); 
-        mForwardIcon = (ImageButton) findViewById(R.id.musicControlNext); 
-       
+        mRewindIcon = (ImageButton) findViewById(R.id.musicControlPrevious);
+        mForwardIcon = (ImageButton) findViewById(R.id.musicControlNext);
+
         mScreenLocked = (TextView) findViewById(R.id.screenLocked);
         mSelector = (SlidingTab) findViewById(R.id.tab_selector);
         mSelector.setHoldAfterTrigger(true, false);
@@ -298,7 +298,7 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
                     mForwardIcon.setVisibility(View.GONE);
                     sendMediaButtonEvent(KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE);
                 }
-            }  
+            }
         });
 
         mRewindIcon.setOnClickListener(new View.OnClickListener() {
@@ -336,39 +336,42 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
 
         mSelector.setOnTriggerListener(this);
 
-        mSelector2.setLeftTabResources(
+        if (mSelector2 != null) {
+
+            mSelector2.setLeftTabResources(
                 R.drawable.ic_jog_dial_answer,
                 R.drawable.jog_tab_target_green,
                 R.drawable.jog_tab_bar_left_generic,
                 R.drawable.jog_tab_left_generic);
 
-        mSelector2.setRightTabResources(
+            mSelector2.setRightTabResources(
                 R.drawable.ic_jog_dial_messaging,
                 R.drawable.jog_tab_target_green,
                 R.drawable.jog_tab_bar_right_generic,
                 R.drawable.jog_tab_right_generic);
 
-        mSelector2.setOnTriggerListener(new OnTriggerListener() {
-            public void onTrigger(View v, int whichHandle) {
-                if (whichHandle == SlidingTab.OnTriggerListener.LEFT_HANDLE) {
-                    Intent callIntent = new Intent(Intent.ACTION_DIAL);
-                    callIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    getContext().startActivity(callIntent);
-                    mCallback.goToUnlockScreen();
-                } else if (whichHandle == SlidingTab.OnTriggerListener.RIGHT_HANDLE){
-                    Intent sendIntent = new Intent(Intent.ACTION_MAIN);
-                    sendIntent.setType("vnd.android-dir/mms-sms");
-                    sendIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    getContext().startActivity(sendIntent);
-                    mCallback.goToUnlockScreen();
+            mSelector2.setOnTriggerListener(new OnTriggerListener() {
+                public void onTrigger(View v, int whichHandle) {
+                    if (whichHandle == SlidingTab.OnTriggerListener.LEFT_HANDLE) {
+                        Intent callIntent = new Intent(Intent.ACTION_DIAL);
+                        callIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        getContext().startActivity(callIntent);
+                        mCallback.goToUnlockScreen();
+                    } else if (whichHandle == SlidingTab.OnTriggerListener.RIGHT_HANDLE){
+                        Intent sendIntent = new Intent(Intent.ACTION_MAIN);
+                        sendIntent.setType("vnd.android-dir/mms-sms");
+                        sendIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        getContext().startActivity(sendIntent);
+                        mCallback.goToUnlockScreen();
+                    }
                 }
-            }
 
-            @Override
-            public void onGrabbedStateChange(View v, int grabbedState) {
-                mCallback.pokeWakelock();
-            }
-        });
+                @Override
+                public void onGrabbedStateChange(View v, int grabbedState) {
+                    mCallback.pokeWakelock();
+                }
+            });
+        };
 
         resetStatusInfo(updateMonitor);
     }
@@ -577,7 +580,7 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
 
     private void sendMediaButtonEvent(int code) {
         long eventtime = SystemClock.uptimeMillis();
-        
+
         Intent downIntent = new Intent(Intent.ACTION_MEDIA_BUTTON, null);
         KeyEvent downEvent = new KeyEvent(eventtime, eventtime, KeyEvent.ACTION_DOWN, code, 0);
         downIntent.putExtra(Intent.EXTRA_KEY_EVENT, downEvent);
@@ -687,10 +690,13 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
                 // layout
                 mScreenLocked.setVisibility(View.VISIBLE);
                 mSelector.setVisibility(View.VISIBLE);
-                if(mLockPhoneMessagingTab){
-                    mSelector2.setVisibility(View.VISIBLE);
-                } else {
-                    mSelector2.setVisibility(View.GONE);
+                if (mSelector2 != null) {
+                {
+                    if(mLockPhoneMessagingTab){
+                        mSelector2.setVisibility(View.VISIBLE);
+                    } else {
+                        mSelector2.setVisibility(View.GONE);
+                    }
                 }
                 mEmergencyCallText.setVisibility(View.GONE);
                 break;
@@ -706,10 +712,13 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
                 // layout
                 mScreenLocked.setVisibility(View.VISIBLE);
                 mSelector.setVisibility(View.VISIBLE);
-                if(mLockPhoneMessagingTab){
-                    mSelector2.setVisibility(View.VISIBLE);
-                } else {
-                    mSelector2.setVisibility(View.GONE);
+                if (mSelector2 != null) {
+                {
+                    if(mLockPhoneMessagingTab){
+                        mSelector2.setVisibility(View.VISIBLE);
+                    } else {
+                        mSelector2.setVisibility(View.GONE);
+                    }
                 }
                 mEmergencyCallText.setVisibility(View.GONE);
                 break;
@@ -721,7 +730,9 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
                 // layout
                 mScreenLocked.setVisibility(View.VISIBLE);
                 mSelector.setVisibility(View.VISIBLE);
-                mSelector2.setVisibility(View.GONE);
+                if (mSelector2 != null) {
+                    mSelector2.setVisibility(View.GONE);
+                }
                 mEmergencyCallText.setVisibility(View.VISIBLE);
                 // do not need to show the e-call button; user may unlock
                 break;
@@ -736,7 +747,9 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
                 // layout
                 mScreenLocked.setVisibility(View.VISIBLE);
                 mSelector.setVisibility(View.GONE); // cannot unlock
-                mSelector2.setVisibility(View.GONE);
+                if (mSelector2 != null) {
+                    mSelector2.setVisibility(View.GONE);
+                }
                 mEmergencyCallText.setVisibility(View.VISIBLE);
                 mEmergencyCallButton.setVisibility(View.VISIBLE);
                 break;
@@ -750,7 +763,9 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
                 // layout
                 mScreenLocked.setVisibility(View.INVISIBLE);
                 mSelector.setVisibility(View.VISIBLE);
-                mSelector2.setVisibility(View.GONE);
+                if (mSelector2 != null) {
+                    mSelector2.setVisibility(View.GONE);
+                }
                 mEmergencyCallText.setVisibility(View.GONE);
                 break;
             case SimPukLocked:
@@ -764,7 +779,9 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
                 // layout
                 mScreenLocked.setVisibility(View.VISIBLE);
                 mSelector.setVisibility(View.GONE); // cannot unlock
-                mSelector2.setVisibility(View.GONE);
+                if (mSelector2 != null) {
+                     mSelector2.setVisibility(View.GONE);
+                }
                 mEmergencyCallText.setVisibility(View.VISIBLE);
                 mEmergencyCallButton.setVisibility(View.VISIBLE);
                 break;
