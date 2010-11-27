@@ -133,6 +133,7 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
     private double mGestureSensitivity;
     private boolean mGestureTrail;
     private boolean mGestureActive;
+    private boolean mHideUnlockTab;
 
     /**
      * The status of this lock screen.
@@ -400,22 +401,37 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
                 Settings.System.LOCKSCREEN_GESTURES_ENABLED, 0) == 1);
         mGestureTrail = (Settings.System.getInt(context.getContentResolver(),
                 Settings.System.LOCKSCREEN_GESTURES_TRAIL, 0) == 1);
+        boolean prefHideUnlockTab = (Settings.Secure.getInt(context.getContentResolver(),
+                Settings.Secure.LOCKSCREEN_GESTURES_DISABLE_UNLOCK, 0) == 1);
         if (!mGestureActive) {
             mGestureTrail = false;
         }
+
         GestureOverlayView gestures = (GestureOverlayView) findViewById(R.id.gestures);
         gestures.setGestureVisible(mGestureTrail);
-
+        boolean GestureCanUnlock = false;
         if (mGestureActive) {
             File mStoreFile = new File(Environment.getDataDirectory(), "/misc/lockscreen_gestures");
             mGestureSensitivity = Settings.System.getInt(context.getContentResolver(),
-                    Settings.System.LOCKSCREEN_GESTURES_SENSITIVITY, 1);
+                    Settings.System.LOCKSCREEN_GESTURES_SENSITIVITY, 3);
             mLibrary = GestureLibraries.fromFile(mStoreFile);
             if (mLibrary.load()) {
                 gestures.addOnGesturePerformedListener(this);
+                for (String name : mLibrary.getGestureEntries()) {
+                    if ("UNLOCK___UNLOCK".equals(name)) {
+                        GestureCanUnlock = true;
+                        break;
+                    }
+                }
             }
         }
-
+        // Safety check in case our preferences in CMParts for hiding the unlock tab don't properly update
+        // system settings... ALWAYS provide a way to unlock the phone
+        if (prefHideUnlockTab && (GestureCanUnlock || mTrackballUnlockScreen || mMenuUnlockScreen)) {
+            mHideUnlockTab = true;
+        } else {
+            mHideUnlockTab = false;
+        }
         resetStatusInfo(updateMonitor);
     }
 
@@ -474,19 +490,7 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
             mCallback.goToUnlockScreen();
         } else if (whichHandle == SlidingTab.OnTriggerListener.RIGHT_HANDLE) {
             // toggle silent mode
-            mSilentMode = !mSilentMode;
-            if (mSilentMode) {
-                final boolean vibe = (Settings.System.getInt(
-                    getContext().getContentResolver(),
-                    Settings.System.VIBRATE_IN_SILENT, 1) == 1);
-
-                mAudioManager.setRingerMode(vibe
-                    ? AudioManager.RINGER_MODE_VIBRATE
-                    : AudioManager.RINGER_MODE_SILENT);
-            } else {
-                mAudioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
-            }
-
+            toggleSilentMode();
             updateRightTabResources();
 
             String message = mSilentMode ?
@@ -718,7 +722,6 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
         if (DBG) Log.d(TAG, "updateLayout: status=" + status);
 
         mEmergencyCallButton.setVisibility(View.GONE); // in almost all cases
-
         switch (status) {
             case Normal:
                 // text
@@ -827,6 +830,9 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
                 mEmergencyCallButton.setVisibility(View.VISIBLE);
                 break;
         }
+        if (mHideUnlockTab) {
+            mSelector.setVisibility(View.GONE);
+        }
     }
 
     static CharSequence getCarrierString(CharSequence telephonyPlmn, CharSequence telephonySpn) {
@@ -918,6 +924,21 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
         mLockPatternUtils.updateEmergencyCallButtonState(mEmergencyCallButton);
     }
 
+    public void toggleSilentMode() {
+        mSilentMode = !mSilentMode;
+        if (mSilentMode) {
+            final boolean vibe = (Settings.System.getInt(
+                getContext().getContentResolver(),
+                Settings.System.VIBRATE_IN_SILENT, 1) == 1);
+
+            mAudioManager.setRingerMode(vibe
+                ? AudioManager.RINGER_MODE_VIBRATE
+                : AudioManager.RINGER_MODE_SILENT);
+        } else {
+            mAudioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
+        }
+    }
+
     @Override
     public void onGesturePerformed(GestureOverlayView overlay, Gesture gesture) {
         ArrayList<Prediction> predictions = mLibrary.recognize(gesture);
@@ -925,16 +946,21 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
             String[] payload = predictions.get(0).name.split("___", 2);
             String uri = payload[1];
             if (uri != null) {
-                try {
+                if ("UNLOCK".equals(uri)) {
+                    mCallback.goToUnlockScreen();
+                } else if ("SOUND".equals(uri)) {
+                    toggleSilentMode();
+                    mCallback.pokeWakelock();
+                } else try {
                     Intent i = Intent.parseUri(uri, 0);
                     i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
                     mContext.startActivity(i);
+                    mCallback.goToUnlockScreen();
                 }
                 catch (URISyntaxException e) {
                 }
                 catch (ActivityNotFoundException e) {
                 }
-                mCallback.goToUnlockScreen();
             }
         } else {
             mCallback.pokeWakelock();  // reset timeout - give them another chance to gesture
