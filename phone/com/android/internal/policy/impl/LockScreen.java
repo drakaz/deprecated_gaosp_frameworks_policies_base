@@ -128,7 +128,8 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
          Settings.System.LOCKSCREEN_ALWAYS_MUSIC_CONTROLS, 0) == 1);
     private boolean mLockPhoneMessagingTab = (Settings.System.getInt(mContext.getContentResolver(),
          Settings.System.LOCKSCREEN_PHONE_MESSAGING_TAB, 0) == 1);
-
+    private String mMessagingTabApp = (Settings.System.getString(mContext.getContentResolver(),
+         Settings.System.LOCKSCREEN_MESSAGING_TAB_APP));
     private double mGestureSensitivity;
     private boolean mGestureTrail;
     private boolean mGestureActive;
@@ -373,11 +374,18 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
                         getContext().startActivity(callIntent);
                         mCallback.goToUnlockScreen();
                     } else if (whichHandle == SlidingTab.OnTriggerListener.RIGHT_HANDLE){
-                        Intent sendIntent = new Intent(Intent.ACTION_MAIN);
-                        sendIntent.setType("vnd.android-dir/mms-sms");
-                        sendIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                        getContext().startActivity(sendIntent);
-                        mCallback.goToUnlockScreen();
+                        if (mMessagingTabApp != null) {
+                            try {
+                                Intent i = Intent.parseUri(mMessagingTabApp, 0);
+                                i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+                                mContext.startActivity(i);
+                                mCallback.goToUnlockScreen();
+                            }
+                            catch (URISyntaxException e) {
+                            }
+                            catch (ActivityNotFoundException e) {
+                            }
+                        }
                     }
                 }
 
