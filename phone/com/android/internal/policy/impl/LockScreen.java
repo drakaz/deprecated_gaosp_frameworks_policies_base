@@ -414,17 +414,19 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
         gestures.setGestureVisible(mGestureTrail);
         gestures.setGestureColor(mGestureColor);
         boolean GestureCanUnlock = false;
-        if (mGestureActive) {
-            File mStoreFile = new File(Environment.getDataDirectory(), "/misc/lockscreen_gestures");
-            mGestureSensitivity = Settings.System.getInt(context.getContentResolver(),
-                    Settings.System.LOCKSCREEN_GESTURES_SENSITIVITY, 3);
-            mLibrary = GestureLibraries.fromFile(mStoreFile);
-            if (mLibrary.load()) {
-                gestures.addOnGesturePerformedListener(this);
-                for (String name : mLibrary.getGestureEntries()) {
-                    if ("UNLOCK___UNLOCK".equals(name)) {
-                        GestureCanUnlock = true;
-                        break;
+        if (gestures != null) {
+            if (mGestureActive) {
+                File mStoreFile = new File(Environment.getDataDirectory(), "/misc/lockscreen_gestures");
+                mGestureSensitivity = Settings.System.getInt(context.getContentResolver(),
+                        Settings.System.LOCKSCREEN_GESTURES_SENSITIVITY, 3);
+                mLibrary = GestureLibraries.fromFile(mStoreFile);
+                if (mLibrary.load()) {
+                    gestures.addOnGesturePerformedListener(this);
+                    for (String name : mLibrary.getGestureEntries()) {
+                        if ("UNLOCK___UNLOCK".equals(name)) {
+                            GestureCanUnlock = true;
+                            break;
+                        }
                     }
                 }
             }
