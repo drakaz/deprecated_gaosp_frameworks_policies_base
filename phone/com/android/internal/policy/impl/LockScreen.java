@@ -134,6 +134,7 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
     private boolean mGestureTrail;
     private boolean mGestureActive;
     private boolean mHideUnlockTab;
+    private int mGestureColor;
 
     /**
      * The status of this lock screen.
@@ -401,6 +402,8 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
                 Settings.System.LOCKSCREEN_GESTURES_ENABLED, 0) == 1);
         mGestureTrail = (Settings.System.getInt(context.getContentResolver(),
                 Settings.System.LOCKSCREEN_GESTURES_TRAIL, 0) == 1);
+        mGestureColor = Settings.System.getInt(context.getContentResolver(),
+                Settings.System.LOCKSCREEN_GESTURES_COLOR, 0xFFFFFF00);
         boolean prefHideUnlockTab = (Settings.Secure.getInt(context.getContentResolver(),
                 Settings.Secure.LOCKSCREEN_GESTURES_DISABLE_UNLOCK, 0) == 1);
         if (!mGestureActive) {
@@ -409,6 +412,7 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
 
         GestureOverlayView gestures = (GestureOverlayView) findViewById(R.id.gestures);
         gestures.setGestureVisible(mGestureTrail);
+        gestures.setGestureColor(mGestureColor);
         boolean GestureCanUnlock = false;
         if (mGestureActive) {
             File mStoreFile = new File(Environment.getDataDirectory(), "/misc/lockscreen_gestures");
