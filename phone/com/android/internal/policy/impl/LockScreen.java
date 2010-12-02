@@ -54,6 +54,7 @@ import java.util.Date;
 import java.io.File;
 import java.net.URISyntaxException;
 
+
 /**
  * The screen within {@link LockPatternKeyguardView} that shows general
  * information about the device depending on its state, and how to get
@@ -956,6 +957,9 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
                     mCallback.goToUnlockScreen();
                 } else if ("SOUND".equals(uri)) {
                     toggleSilentMode();
+                    mCallback.pokeWakelock();
+                } else if ("FLASHLIGHT".equals(uri)) {
+                    mContext.sendBroadcast(new Intent("net.cactii.flash2.TOGGLE_FLASHLIGHT"));
                     mCallback.pokeWakelock();
                 } else try {
                     Intent i = Intent.parseUri(uri, 0);
